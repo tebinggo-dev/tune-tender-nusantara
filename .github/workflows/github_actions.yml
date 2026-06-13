@@ -1,0 +1,43 @@
+name: Tender Sniper - Auto Scrape & Broadcast
+
+on:
+  schedule:
+    # Run every 2 hours (adjust as needed)
+    - cron: '0 */2 * * *'
+  workflow_dispatch:  # Manual trigger
+
+jobs:
+  scrape-and-broadcast:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repo
+      uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.11'
+
+    - name: Install dependencies
+      run: |
+        pip install requests beautifulsoup4 python-telegram-bot
+
+    - name: Run Scraper
+      run: python tender_sniper_scraper.py
+
+    - name: Run Bot Broadcast
+      env:
+        BOT_TOKEN: ${{ secrets.BOT_TOKEN }}
+        CHANNEL_ID: ${{ secrets.CHANNEL_ID }}
+        SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+        SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
+      run: python tender_sniper_broadcast.py
+
+    - name: Commit results
+      run: |
+        git config --local user.email "action@github.com"
+        git config --local user.name "GitHub Action"
+        git add tenders_jatim.json
+        git diff --quiet && git diff --staged --quiet || git commit -m "Update tenders: $(date)"
+        git push
