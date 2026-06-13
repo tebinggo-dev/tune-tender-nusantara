@@ -1,5 +1,8 @@
 name: Tender Sniper - Auto Scrape & Broadcast
 
+permissions:
+  contents: write
+
 on:
   schedule:
     # Run every 2 hours (adjust as needed)
