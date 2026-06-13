@@ -5,9 +5,14 @@ permissions:
 
 on:
   schedule:
-    # Run every 2 hours (adjust as needed)
+    # Run every 2 hours
     - cron: '0 */2 * * *'
   workflow_dispatch:  # Manual trigger
+
+# POLISI LALU LINTAS: Mencegah tabrakan jika kamu klik manual berkali-kali
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: false
 
 jobs:
   scrape-and-broadcast:
@@ -37,10 +42,10 @@ jobs:
         SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
       run: python tender_sniper_broadcast.py
 
-    - name: Commit results
-      run: |
-        git config --local user.email "action@github.com"
-        git config --local user.name "GitHub Action"
-        git add tenders_jatim.json
-        git diff --quiet && git diff --staged --quiet || git commit -m "Update tenders: $(date)"
-        git push
+    - name: Auto Commit and Push Results
+      uses: stefanzweifel/git-auto-commit-action@v5
+      with:
+        commit_message: "Update tenders data"
+        file_pattern: "tenders_jatim.json"
+        commit_user_name: GitHub Action
+        commit_user_email: action@github.com
